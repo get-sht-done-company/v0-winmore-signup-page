@@ -109,9 +109,12 @@ export default function JoinClientPage() {
   useEffect(() => {
     setShowIcons(true)
     confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
+      particleCount: 150,
+      spread: 180,
+      origin: { x: 0.5, y: 0 },
+      angle: 90,
+      startVelocity: 45,
+      gravity: 1,
       colors: ["#F34D4E", "#FF6B6B", "#E63946", "#ffffff"],
     })
   }, [])
@@ -401,7 +404,7 @@ export default function JoinClientPage() {
                   <div className="flex-1">
                     <label
                       htmlFor="terms-desktop"
-                      className="text-xs text-zinc-500 leading-relaxed cursor-pointer max-w-[80%] block"
+                      className="text-zinc-500 leading-relaxed cursor-pointer max-w-[80%] block text-xs"
                     >
                       By creating an account, you agree to our{" "}
                       <a
