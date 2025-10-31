@@ -22,17 +22,36 @@ export function PhoneInput({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let inputValue = e.target.value
 
-    // Remove any spaces for checking
-    const cleanValue = inputValue.replace(/\s/g, "")
+    // Remove any non-digit characters except spaces and plus
+    inputValue = inputValue.replace(/[^\d\s+]/g, "")
 
-    // If user types +44 or 44 at the start, replace with 0
-    if (cleanValue.startsWith("+44")) {
-      inputValue = "0" + cleanValue.slice(3)
-    } else if (cleanValue.startsWith("44") && cleanValue.length > 2) {
-      inputValue = "0" + cleanValue.slice(2)
+    // Handle +44 country code
+    if (inputValue.startsWith("+44")) {
+      inputValue = "0" + inputValue.slice(3).replace(/\s/g, "")
+    } else if (inputValue.startsWith("44") && inputValue.length > 2) {
+      inputValue = "0" + inputValue.slice(2).replace(/\s/g, "")
     }
 
-    onChange(inputValue)
+    // Remove all spaces for processing
+    const digitsOnly = inputValue.replace(/\s/g, "")
+
+    // Limit to 11 digits for UK numbers
+    if (digitsOnly.length > 11) {
+      return
+    }
+
+    // Validate UK phone number format (must start with 0)
+    if (digitsOnly.length > 0 && !digitsOnly.startsWith("0")) {
+      return
+    }
+
+    // Format with spaces for readability (UK standard: 07700 900000)
+    let formatted = digitsOnly
+    if (digitsOnly.length > 5) {
+      formatted = digitsOnly.slice(0, 5) + " " + digitsOnly.slice(5)
+    }
+
+    onChange(formatted)
   }
 
   return (
@@ -43,9 +62,10 @@ export function PhoneInput({
       </div>
       <input
         id="phone"
+        name="phone"
         type="tel"
         autoComplete="tel"
-        placeholder="7700 900000"
+        placeholder="07700 900000"
         value={value}
         onChange={handleChange}
         disabled={disabled}

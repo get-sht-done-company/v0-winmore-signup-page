@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { PhoneInput } from "@/components/phone-input"
+import confetti from "canvas-confetti"
 
 const signupSchema = z.object({
   fullName: z
@@ -25,6 +26,7 @@ const signupSchema = z.object({
       const ukPhoneRegex = /^(0?[1-9]\d{8,9})$/
       return ukPhoneRegex.test(cleaned)
     }, "Please enter a valid UK phone number"),
+  termsAccepted: z.boolean().refine((val) => val === true, "You must accept the terms and conditions"),
   // Honeypot field for spam prevention
   company: z.string().max(0).optional(),
 })
@@ -48,11 +50,13 @@ export default function JoinClientPage() {
       fullName: "",
       email: "",
       phone: "",
+      termsAccepted: false,
       company: "",
     },
   })
 
   const phoneValue = watch("phone")
+  const termsAccepted = watch("termsAccepted")
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -104,6 +108,12 @@ export default function JoinClientPage() {
 
   useEffect(() => {
     setShowIcons(true)
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ["#F34D4E", "#FF6B6B", "#E63946", "#ffffff"],
+    })
   }, [])
 
   return (
@@ -368,9 +378,62 @@ export default function JoinClientPage() {
                   aria-hidden="true"
                 />
 
+                <div className="flex items-start gap-3">
+                  <div className="relative flex items-center justify-center mt-0.5">
+                    <input
+                      id="terms-desktop"
+                      type="checkbox"
+                      {...register("termsAccepted")}
+                      disabled={isSubmitting}
+                      className="w-5 h-5 bg-zinc-900 border border-zinc-800 rounded appearance-none cursor-pointer checked:bg-[#F34D4E] checked:border-[#F34D4E] focus:outline-none focus:border-white/30 focus:shadow-[0_0_0_1px_rgba(255,255,255,1),0_0_0_3px_rgba(255,255,255,0.25)] transition-all disabled:opacity-50 disabled:cursor-not-allowed peer"
+                      aria-invalid={errors.termsAccepted ? "true" : "false"}
+                      aria-describedby={errors.termsAccepted ? "terms-error" : undefined}
+                    />
+                    <svg
+                      className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <label
+                      htmlFor="terms-desktop"
+                      className="text-xs text-zinc-500 leading-relaxed cursor-pointer max-w-[80%] block"
+                    >
+                      By creating an account, you agree to our{" "}
+                      <a
+                        href="https://winmore.uk/terms-and-conditions"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white underline underline-offset-2 transition-colors text-zinc-400"
+                      >
+                        Terms & Conditions
+                      </a>{" "}
+                      and{" "}
+                      <a
+                        href="https://winmore.uk/privacy-policy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white underline underline-offset-2 transition-colors text-zinc-400"
+                      >
+                        Privacy Policy
+                      </a>
+                      .
+                    </label>
+                    {errors.termsAccepted && (
+                      <p id="terms-error" className="mt-1.5 text-sm text-red-400">
+                        {errors.termsAccepted.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !termsAccepted}
                   className="mt-6 w-full py-3 px-4 bg-[#F34D4E] text-white font-semibold hover:bg-[#FF6B6B] active:bg-[#E63946] focus:outline-none focus:ring-2 focus:ring-[#F34D4E] focus:ring-offset-2 focus:ring-offset-zinc-950 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 tracking-[-0.025em] rounded-lg shadow-none"
                 >
                   {isSubmitting ? (
@@ -394,30 +457,6 @@ export default function JoinClientPage() {
                     "Claim double credit"
                   )}
                 </button>
-
-                <div className="max-w-[90%] mx-auto">
-                  <p className="mt-3 text-center leading-relaxed text-xs text-zinc-500">
-                    By creating an account, you agree to our{" "}
-                    <a
-                      href="https://winmore.uk/terms-and-conditions"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-white underline underline-offset-2 transition-colors text-zinc-400"
-                    >
-                      Terms & Conditions
-                    </a>{" "}
-                    and{" "}
-                    <a
-                      href="https://winmore.uk/privacy-policy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-white underline underline-offset-2 transition-colors text-zinc-400"
-                    >
-                      Privacy Policy
-                    </a>
-                    .
-                  </p>
-                </div>
               </form>
             </div>
 
@@ -585,28 +624,57 @@ export default function JoinClientPage() {
                   aria-hidden="true"
                 />
 
-                <div className="max-w-[90%] mt-5">
-                  <p className="text-left leading-relaxed text-zinc-500 text-xs">
-                    By creating an account, you agree to our{" "}
-                    <a
-                      href="https://winmore.uk/terms-and-conditions"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-white underline underline-offset-2 transition-colors text-zinc-400"
+                <div className="flex items-start gap-3 mt-5">
+                  <div className="relative flex items-center justify-center mt-0.5">
+                    <input
+                      id="terms-mobile"
+                      type="checkbox"
+                      {...register("termsAccepted")}
+                      disabled={isSubmitting}
+                      className="w-5 h-5 bg-zinc-900 border border-zinc-800 rounded appearance-none cursor-pointer checked:bg-[#F34D4E] checked:border-[#F34D4E] focus:outline-none focus:border-white/30 focus:shadow-[0_0_0_1px_rgba(255,255,255,1),0_0_0_3px_rgba(255,255,255,0.25)] transition-all disabled:opacity-50 disabled:cursor-not-allowed peer"
+                      aria-invalid={errors.termsAccepted ? "true" : "false"}
+                      aria-describedby={errors.termsAccepted ? "terms-error-mobile" : undefined}
+                    />
+                    <svg
+                      className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      Terms & Conditions
-                    </a>{" "}
-                    and{" "}
-                    <a
-                      href="https://winmore.uk/privacy-policy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-white underline underline-offset-2 transition-colors text-zinc-400"
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <label
+                      htmlFor="terms-mobile"
+                      className="text-xs text-zinc-500 leading-relaxed cursor-pointer max-w-[80%] block"
                     >
-                      Privacy Policy
-                    </a>
-                    .
-                  </p>
+                      By creating an account, you agree to our{" "}
+                      <a
+                        href="https://winmore.uk/terms-and-conditions"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white underline underline-offset-2 transition-colors text-zinc-400"
+                      >
+                        Terms & Conditions
+                      </a>{" "}
+                      and{" "}
+                      <a
+                        href="https://winmore.uk/privacy-policy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white underline underline-offset-2 transition-colors text-zinc-400"
+                      >
+                        Privacy Policy
+                      </a>
+                      .
+                    </label>
+                    {errors.termsAccepted && (
+                      <p id="terms-error-mobile" className="mt-1.5 text-sm text-red-400">
+                        {errors.termsAccepted.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </form>
             </div>
@@ -615,7 +683,7 @@ export default function JoinClientPage() {
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-zinc-950 z-30 py-2 opacity-100 px-7">
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !termsAccepted}
               onClick={handleSubmit(onSubmit)}
               className="w-full py-3 px-4 bg-[#F34D4E] text-white font-semibold hover:bg-[#FF6B6B] active:bg-[#E63946] focus:outline-none focus:ring-2 focus:ring-[#F34D4E] focus:ring-offset-2 focus:ring-offset-zinc-950 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 tracking-[-0.025em] rounded-lg shadow-none"
             >
